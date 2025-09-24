@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sous-projet 2 — Test d'Intrusion sur Applications Web</title>
+  <link rel="stylesheet" href="../style.css" />
+  <meta name="description" content="Pentest applicatif : reconnaissance, injection SQL, FTP mal configuré, reporting et remédiation." />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="header-left">
+        <h1>Portfolio — Joseline Youego</h1>
+        <p class="tagline">Sécurité des SI • Pentesting • Forensic</p>
+      </div>
+      <nav class="header-nav">
+        <a href="../index.html">Accueil</a>
+        <a href="#objectif">Objectif</a>
+        <a href="#demarche">Démarche & Outils</a>
+        <a href="#resultats">Résultats</a>
+        <a href="#competences">Compétences</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav aria-label="breadcrumb" class="small" style="margin:.75rem 0;">
+      <a href="../index.html">Accueil</a> › <a href="../index.html#projects">Projets</a> › Sous-projet 2
+    </nav>
+
+    <article class="card">
+      <h2>Sous-projet 2 : Test d'Intrusion sur des Applications Web (Pentesting Applicatif)</h2>
+      <p>
+        Ce projet démontre ma capacité à identifier et exploiter des vulnérabilités applicatives courantes dans un environnement web.
+        En adoptant la posture d'un attaquant (en laboratoire contrôlé), j'ai mené un audit complet depuis la reconnaissance jusqu'à l'exfiltration.
+      </p>
+    </article>
+
+    <section id="objectif" class="card">
+      <h3>Objectif</h3>
+      <p>
+        Auditer la sécurité des serveurs <strong>WebServer1</strong> et <strong>WebServer2</strong> en simulant des attaques réalistes depuis une machine Kali Linux
+        (méthodologie <strong>boîte grise</strong>).
+        Détecter et exploiter des failles critiques (notamment <strong>injection SQL</strong> et mauvaises configurations de services),
+        évaluer l'impact puis proposer des correctifs exploitables.
+      </p>
+    </section>
+
+    <section id="demarche" class="card">
+      <h3>Démarche &amp; Outils</h3>
+
+      <ol>
+        <li>
+          <h4>Phase de reconnaissance</h4>
+          <p>Scan réseau et identification des services exposés :</p>
+          <pre><code>nmap -sS -sV -p- -T4 192.168.44.0/24</code></pre>
+          <p>Énumération web pour déceler répertoires et pages :</p>
+          <pre><code>gobuster dir -u http://192.168.44.101 -w /usr/share/wordlists/dirb/common.txt</code></pre>
+        </li>
+
+        <li>
+          <h4>Exploitation — Injection SQL (WebServer1)</h4>
+          <p>Analyse automatisée et extraction (exemples illustratifs, réalisés en lab) :</p>
+          <pre><code>sqlmap -u "http://192.168.44.101/login.php" --forms --batch --level=5 --risk=3</code></pre>
+          <pre><code>sqlmap -u "http://192.168.44.101/login.php" --data "username=admin&password=test" --dbs</code></pre>
+          <p>Exfiltration contrôlée d’une table `users` (démonstration d’impact).</p>
+        </li>
+
+        <li>
+          <h4>Exploitation — FTP mal configuré (WebServer2)</h4>
+          <p>Connexion anonyme et récupération de fichiers sensibles :</p>
+          <pre><code>ftp 192.168.44.102
+# username: anonymous</code></pre>
+          <p>Navigation vers `/secret` et téléchargement des fichiers exposés.</p>
+        </li>
+
+        <li>
+          <h4>Documentation & preuves</h4>
+          <p>Captures d'écran (nmap, sqlmap, sessions FTP), logs, et échantillons de requêtes malveillantes sauvegardés pour le rapport.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="resultats" class="card">
+      <h3>Résultats &amp; Livrables</h3>
+      <ul>
+        <li><strong>Rapport de pentest</strong> complet : reconnaissance → exploitation → exfiltration → évaluation de l'impact.</li>
+        <li><strong>Preuves</strong> : captures d’écran et logs (nmap, sqlmap, FTP).</li>
+        <li><strong>Patch proposé</strong> : correction du `login.php` avec exemple utilisant <em>prepared statements</em> (extrait fourni).</li>
+        <li><strong>Checklist de remédiation</strong> : désactivation FTP anonyme, durcissement permissions, mise en place d’un WAF (ModSecurity), revue des journaux.</li>
+        <li><strong>PDF synthétique</strong> pour diffusion auprès des équipes dev/ops.</li>
+      </ul>
+    </section>
+
+    <section id="competences" class="card">
+      <h3>Compétences démontrées</h3>
+      <ul>
+        <li> <strong>Pentesting applicatif</strong> : méthodologie structurée (reconnaissance, exploitation, exfiltration).</li>
+        <li> <strong>Boîte grise</strong> : audit réalisé avec informations partielles pour simuler un cas réaliste.</li>
+        <li> <strong>Outils professionnels</strong> : nmap, gobuster/dirb, sqlmap, clients FTP, Burp Suite (pour tests manuels).</li>
+        <li> <strong>Sécurisation applicative</strong> : identification d’injection SQL (OWASP Top 10) et recommandations (prepared statements, validation côté serveur).</li>
+        <li> <strong>Reporting</strong> : production de rapports exploitables et priorisation des remédiations.</li>
+      </ul>
+
+      <p class="small">
+        <strong>Note :</strong> toutes les actions présentées ont été réalisées dans un environnement de laboratoire contrôlé,
+        dans le cadre d’un audit autorisé. Elles servent uniquement à démontrer la méthodologie et les remédiations proposées.
+      </p>
+    </section>
+
+    <p class="small">
+      <a href="../index.html#projects">← Retour aux projets</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>© 2025 Joseline Youego — Consultante en sécurité informatique</p>
+    </div>
+  </footer>
+</body>
+</html>

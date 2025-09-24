@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sous-projet 4 — Réponse à Incident & Analyse Forensique</title>
+  <link rel="stylesheet" href="../style.css" />
+  <meta name="description" content="Blue Team : détection avec Wazuh, analyse mémoire Volatility, remédiation et durcissement." />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="header-left">
+        <h1>Portfolio — Joseline Youego</h1>
+        <p class="tagline">Blue Team • Forensic • SIEM</p>
+      </div>
+      <nav class="header-nav">
+        <a href="../index.html">Accueil</a>
+        <a href="#objectif">Objectif</a>
+        <a href="#demarche">Démarche & Outils</a>
+        <a href="#resultats">Résultats</a>
+        <a href="#competences">Compétences</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav aria-label="breadcrumb" class="small" style="margin:.75rem 0;">
+      <a href="../index.html">Accueil</a> › <a href="../index.html#projects">Projets</a> › Sous-projet 4
+    </nav>
+
+    <article class="card">
+      <h2>Sous-projet 4 : Réponse à Incident et Analyse Forensique (Blue Team)</h2>
+      <p>
+        Ce projet illustre ma capacité à passer du rôle d'attaquant à celui de défenseur. Il couvre la détection
+        d'activités malveillantes avec un SIEM, l'analyse forensique pour comprendre une compromission, et la mise en œuvre
+        de correctifs pour restaurer et renforcer la sécurité.
+      </p>
+    </article>
+
+    <section id="objectif" class="card">
+      <h3>Objectif</h3>
+      <p>
+        Détecter des attaques simulées, analyser l'impact, retracer les actions de l'attaquant et appliquer des mesures correctives
+        efficaces. Ce scénario évalue la robustesse des mécanismes de défense et la capacité à répondre rapidement à un incident.
+      </p>
+    </section>
+
+    <section id="demarche" class="card">
+      <h3>Démarche &amp; Outils</h3>
+      <p>La démarche a été structurée en trois phases : détection (Wazuh), analyse mémoire (Volatility) et application de correctifs.</p>
+
+      <h4>1. Détection d'Attaques avec le SIEM Wazuh</h4>
+      <ul>
+        <li><strong>Simulation et détection d’un brute force SSH :</strong> attaque lancée contre WebServer1 (outil de test en lab : <em>hydra</em>).
+          L’agent Wazuh a collecté les logs d’authentification (<code>/var/log/auth.log</code>) montrant de multiples tentatives échouées depuis <code>192.168.45.20</code>.</li>
+        <li><strong>Analyse des alertes :</strong> le dashboard Wazuh a affiché en temps réel 703 alertes liées à l’activité suspecte, corrélées
+          avec le framework MITRE ATT&CK (T1110 - Brute Force). Règles déclenchées (exemples) : ID 5760 (échec d'auth SSH), ID 2502 (échecs multiples).</li>
+        <li><strong>Conformité :</strong> possibilité de filtrer et d’aligner les événements avec des standards (ex. PCI-DSS).</li>
+      </ul>
+
+      <h4>2. Analyse Mémoire (Forensic) avec Volatility</h4>
+      <ul>
+        <li><strong>Dump mémoire :</strong> création d’un dump mémoire sur WebServer2 pour analyse post-mortem.</li>
+        <li><strong>Investigation :</strong> utilisation de Volatility (ex. <code>linux.pslist</code>, <code>linux.sockstat</code>, <code>linux.lsof</code>) :
+          découverte de processus (vsftpd, sshd, apache2), connexions actives vers <code>192.168.1.101</code> (ports 21 &amp; 22), et fichiers ouverts suggérant des transferts.</li>
+      </ul>
+
+      <h4>3. Application des Correctifs et Durcissement</h4>
+      <p>Actions réalisées suite à la détection :</p>
+      <ul>
+        <li><strong>WebServer1 :</strong> analyse des logs Apache, déploiement d’un WAF (ModSecurity), correction du code vulnérable (requêtes préparées).</li>
+        <li><strong>WebServer2 :</strong> désactivation de l'accès FTP anonyme (<code>anonymous_enable=NO</code> dans <code>vsftpd.conf</code>).</li>
+        <li><strong>Windows 7 :</strong> désactivation SMBv1 et arrêt du service Print Spooler.</li>
+        <li><strong>Réseau :</strong> blocage de l’IP attaquante via pfSense/iptables, déploiement de Fail2Ban et durcissement SSH (<code>PermitRootLogin no</code>).</li>
+      </ul>
+    </section>
+
+    <section id="resultats" class="card">
+      <h3>Résultats et Livrables</h3>
+      <ul>
+        <li><strong>Captures d’écran Wazuh :</strong> détection en temps réel, classification MITRE ATT&CK, règles déclenchées.</li>
+        <li><strong>Rapport forensique :</strong> sorties Volatility détaillant processus, connexions et fichiers suspects.</li>
+        <li><strong>Liste de remédiations :</strong> commandes et configurations appliquées (Apache, VSFTPD, Windows, iptables, Fail2Ban).</li>
+      </ul>
+
+      <h4>Annexes</h4>
+      <p>Emplacements pour joindre les preuves :</p>
+      <ul>
+        <li><a href="../annexes/wazuh_screenshots.zip" target="_blank">Captures Wazuh (zip)</a> — (à ajouter en local si nécessaire)</li>
+        <li><a href="../annexes/forensic_report.pdf" target="_blank">Rapport Forensic (PDF)</a> — (placeholder)</li>
+      </ul>
+    </section>
+
+    <section id="competences" class="card">
+      <h3>Compétences Démontrées</h3>
+      <ul>
+        <li><strong>Réponse à incident :</strong> détecter, analyser et corriger une attaque en suivant un plan structuré.</li>
+        <li><strong>Utilisation SIEM :</strong> configuration et exploitation de Wazuh pour corrélation et alerting.</li>
+        <li><strong>Analyse mémoire :</strong> Volatility pour extraire indicateurs de compromission.</li>
+        <li><strong>Patch Management & Durcissement :</strong> déploiement de correctifs, mise en place de WAF, restrictions FTP/SSH, et règles réseau.</li>
+      </ul>
+
+      <h4>Exemples de commandes défensives</h4>
+      <p>Commandes/directions utiles pour la remédiation (administrateur autorisé) :</p>
+      <pre><code># Exemple : désactiver l'accès FTP anonyme (vsftpd.conf)
+# Dans /etc/vsftpd.conf
+anonymous_enable=NO
+
+# Exemple : activer et configurer Fail2Ban (basique)
+sudo apt install fail2ban
+# ensuite éditer /etc/fail2ban/jail.local pour activer la jail ssh
+
+# Exemple : blocage d'une IP suspecte (iptables)
+sudo iptables -A INPUT -s 192.168.45.20 -j DROP
+</code></pre>
+
+      <p class="small">Ces commandes sont destinées aux équipes de défense pour la remédiation et le durcissement.</p>
+    </section>
+
+    <section class="card">
+      <h3>Bonnes pratiques pour le rendu académique</h3>
+      <ul>
+        <li>Conserver les preuves brutes localement et ne publier que des versions redacted / synthétiques sur le web public.</li>
+        <li>Livrer les PoC sensibles via une archive chiffrée (GPG) à l'encadrant et communiquer la clé séparément.</li>
+        <li>Inclure une fiche d'autorisation signée précisant le cadre d'utilisation des PoC.</li>
+      </ul>
+    </section>
+
+    <p class="small">
+      <a href="../index.html#projects">← Retour aux projets</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>© 2025 Joseline Youego — Consultante en sécurité informatique</p>
+    </div>
+  </footer>
+</body>
+</html>

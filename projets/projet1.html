@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sous-projet 1 — Conception & Sécurisation d'une Infrastructure Réseau</title>
+  <link rel="stylesheet" href="../style.css" />
+  <meta name="description" content="Architecture réseau segmentée, pfSense, Wazuh SIEM, services web vulnérables pour exercices Red/Blue Team." />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="header-left">
+        <h1>Portfolio — Joseline Youego</h1>
+        <p class="tagline">Sécurité des SI • Forensic • Crypto appliquée</p>
+      </div>
+      <nav class="header-nav">
+        <a href="../index.html">Accueil</a>
+        <a href="#objectif">Objectif</a>
+        <a href="#demarche">Démarche & Outils</a>
+        <a href="#resultats">Résultats</a>
+        <a href="#competences">Compétences</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav aria-label="breadcrumb" class="small" style="margin:.75rem 0;">
+      <a href="../index.html">Accueil</a> › <a href="../index.html#projects">Projets</a> › Sous-projet 1
+    </nav>
+
+    <article class="card">
+      <h2>Sous-projet 1 : Conception et Sécurisation d'une Infrastructure Réseau (Architecture &amp; Hardening)</h2>
+      <p>
+        Ce projet illustre mes compétences en architecture réseau et en sécurisation périmétrique.
+        L'objectif était de construire une infrastructure segmentée et robuste, capable d'héberger divers services
+        tout en intégrant des outils de surveillance pour une détection proactive des menaces.
+      </p>
+    </article>
+
+    <section id="objectif" class="card">
+      <h3>Objectif</h3>
+      <p>
+        Concevoir et déployer une infrastructure réseau multi-zones sécurisée par un pare-feu <strong>pfSense</strong>.
+        Cette architecture isole les services critiques (serveurs web, base de données, serveur de fichiers)
+        et intègre un <strong>SIEM (Wazuh)</strong> pour analyser les événements de sécurité.
+        Le but final est de créer un environnement contrôlé permettant de simuler et d’analyser des incidents de sécurité
+        de manière réaliste.
+      </p>
+    </section>
+
+    <section id="demarche" class="card">
+      <h3>Démarche et Outils</h3>
+
+      <ol>
+        <li>
+          <h4>Segmentation Logique du Réseau</h4>
+          <ul>
+            <li><strong>LAN (Admin – 192.168.1.0/24)</strong> : Zone administrative, machine d’attaque/adm (Kali).</li>
+            <li><strong>DMZ (192.168.43.0/24)</strong> : <em>Reverse Proxy</em> (NGINX/Apache2), unique point d’entrée web.</li>
+            <li><strong>Web Servers (192.168.44.0/24)</strong> : WebServer1 (Apache + MariaDB) &amp; WebServer2 (FTP).</li>
+            <li><strong>Logging &amp; Security (192.168.45.0/24)</strong> : <em>SIEM Wazuh</em> + machine Windows 7 vulnérable.</li>
+          </ul>
+        </li>
+
+        <li>
+          <h4>Configuration du Pare-feu pfSense</h4>
+          <ul>
+            <li>Politique <strong>deny by default</strong> avec ouvertures minimales par flux.</li>
+            <li>Blocage d’accès Internet direct → Web Servers (seul le Reverse Proxy sortant/entrant autorisé).</li>
+            <li>Autorisation des flux de logs vers le <strong>Wazuh</strong> manager.</li>
+            <li>Accès contrôlé depuis Kali pour scénarios de test/pentest.</li>
+          </ul>
+        </li>
+
+        <li>
+          <h4>Déploiement des Services (avec vulnérabilités intentionnelles)</h4>
+          <ul>
+            <li><strong>Reverse Proxy (NGINX)</strong> : routage vers backends, terminaison TLS possible.</li>
+            <li><strong>WebServer1 (192.168.44.101)</strong> : PHP + <strong>MariaDB</strong>, formulaire vulnérable à
+              <strong>l’injection SQL</strong> (scénarios d’exploitation contrôlés).</li>
+            <li><strong>WebServer2 (192.168.44.102)</strong> : FTP <strong>VSFTPD</strong> mal configuré (anonyme activé).</li>
+            <li><strong>Windows 7 (192.168.45.30)</strong> : SMBv1/RDP actifs → vulnérable à
+              <strong>EternalBlue (MS17-010)</strong> et <strong>PrintNightmare (CVE-2021-34527)</strong>.</li>
+          </ul>
+        </li>
+
+        <li>
+          <h4>Mise en place du SIEM Wazuh</h4>
+          <ul>
+            <li>Installation du <strong>Wazuh manager, indexer et dashboard</strong>.</li>
+            <li>Agents Wazuh sur Reverse Proxy, WebServer1/2 et Windows 7.</li>
+            <li>Centralisation &amp; analyse temps réel des logs, alerting &amp; corrélations.</li>
+          </ul>
+        </li>
+      </ol>
+    </section>
+
+    <section id="resultats" class="card">
+      <h3>Résultats et Livrables</h3>
+      <ul>
+        <li><strong>Schéma d’architecture réseau</strong> illustrant la segmentation et le cloisonnement.</li>
+        <li><strong>Tableau des règles pfSense</strong> avec justification (flux autorisés/interdits).</li>
+        <li><strong>Configurations clés</strong> (NGINX, Apache, VSFTPD) documentées.</li>
+        <li>Infrastructure fonctionnelle et sécurisée servant de base à :
+          <ul>
+            <li>exercices <strong>Red Team</strong> (pentesting),</li>
+            <li>exercices <strong>Blue Team</strong> (détection, réponse, forensic).</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+
+    <section id="competences" class="card">
+      <h3>Compétences Démontrées</h3>
+      <ul>
+        <li>🛡 <strong>Architecture Réseau &amp; Sécurité</strong> : topologie cloisonnée multi-zones.</li>
+        <li>🔒 <strong>Firewalling</strong> : pfSense, filtrage de flux interzones, approche ZTNA.</li>
+        <li>💻 <strong>Administration Système</strong> : déploiement/configuration Web/DB/FTP.</li>
+        <li>📊 <strong>Outils de sécurité</strong> : déploiement et exploitation d’un <strong>SIEM (Wazuh)</strong>.</li>
+        <li>🖥 <strong>Virtualisation</strong> : orchestration de plusieurs VMs pour lab sécurité.</li>
+      </ul>
+    </section>
+
+    <p class="small">
+      <a href="../index.html#projects">← Retour aux projets</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>© 2025 Joseline Youego — Consultante en sécurité informatique</p>
+    </div>
+  </footer>
+</body>
+</html>
