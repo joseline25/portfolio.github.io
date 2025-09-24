@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rétro-ingénierie & Analyse de Malware (pédagogique)</title>
+  <link rel="stylesheet" href="../style.css" />
+  <meta name="description" content="Analyse pédagogique et sanitisée d'un binaire suspect : rétro-ingénierie, anti-analyse, injection mémoire (documentation sans binaries)." />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="header-left">
+        <h1>Rétro-ingénierie d’un Programme Suspect</h1>
+        <p class="tagline">Analyse de malware (pédagogique & sanitisée) — laboratoire isolé</p>
+      </div>
+
+      <nav class="header-nav">
+        <a href="../index.html">Accueil</a>
+        <a href="#resume">Résumé</a>
+        <a href="#demarche">Démarche</a>
+        <a href="#livrables">Résultats</a>
+        <a href="#reco">Recommandations</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav aria-label="breadcrumb" class="small" style="margin:.75rem 0;">
+      <a href="../index.html">Accueil</a> › <a href="../index.html#projects">Projets</a> › projet5
+    </nav>
+
+    <article class="card">
+      <h2 id="resume">Résumé</h2>
+      <p>
+        Analyse statique et dynamique d’un exécutable suspect réalisée dans une VM isolée. 
+        Objectifs : comprendre le flux d’exécution, identifier comportements indésirables, détecter techniques anti-analyse
+        (ex. <code>IsDebuggerPresent</code>) et proposer des patchs pédagogiques pour neutraliser les effets indésirables.
+        Une seconde partie documente un cas d’injection mémoire (offuscation XOR → VirtualAlloc → déchiffrement → exécution).
+      </p>
+    </article>
+
+    <section id="objectifs" class="card">
+      <h3>Objectifs détaillés</h3>
+      <ul>
+        <li>Comprendre le fonctionnement réel du programme depuis le binaire (désassemblage / CFG / decompilation).</li>
+        <li>Identifier fonctionnalités indésirables (boucle infinie, exécution de commandes, DoS local).</li>
+        <li>Détecter et contourner de façon contrôlée les mécanismes anti-analyse (IsDebuggerPresent, CheckRemoteDebuggerPresent).</li>
+        <li>Proposer et appliquer un patch pédagogique pour neutraliser la boucle infinie et l’anti-débogage (sanitisé).</li>
+        <li>Documenter le mécanisme d’injection mémoire et expliquer les contre-mesures défensives.</li>
+      </ul>
+    </section>
+
+    <section id="demarche" class="card">
+      <h3>Démarche &amp; Outils (non-opérationnel)</h3>
+
+      <ol>
+        <li><strong>Observation comportementale</strong> — exécution contrôlée, surveillance CPU/I/O, captures réseau locales.</li>
+        <li><strong>Analyse statique</strong> — désassemblage et décompilation (graphes CFG) avec IDA Pro / Ghidra.</li>
+        <li><strong>Analyse dynamique</strong> — debugging en VM isolée (x64dbg / WinDbg) pour tracer appels API sensibles (IsDebuggerPresent, VirtualAlloc, system).</li>
+        <li><strong>Patching pédagogique</strong> — exemple de pattern (sanitisé) montrant comment neutraliser un test anti-débogage sans fournir d'offsets ni binaire.</li>
+        <li><strong>Analyse d’injection mémoire</strong> — description du flux : offuscation XOR → VirtualAlloc (+PROT_EXEC) → copie → déchiffrement → exécution → nettoyage.</li>
+      </ol>
+
+      <h4>Outils (usage en laboratoire uniquement)</h4>
+      <p>IDA Pro / Ghidra, x64dbg / WinDbg, Python (scripts pédagogiques non-exécutables), Process Explorer, Procmon, VM isolée avec snapshots.</p>
+    </section>
+
+    <section id="livrables" class="card">
+      <h3>Résultats </h3>
+      <p>Livrables publics disponibles :</p>
+
+<ul>
+  <li>
+    <a href="../assets/projet5/presentation.pdf" target="_blank" rel="noopener">presentation_analyse_malware.pdf</a>
+    — rapport d’analyse (observations, CFG, fonctions critiques).
+  </li>
+
+  <li>
+    <a href="../assets/projet5/feuille_attaque.pdf" target="_blank" rel="noopener">feuille_attaque.pdf</a>
+    — conception d'un programme (injection mémoire, offuscation).
+  </li>
+
+  <li>
+    <strong>Dépôt source & détails :</strong>
+    <a href="https://github.com/joseline25/malware_attaque" target="_blank" rel="noopener">
+      github.com/joseline25/malware_attaque
+    </a>
+    — code source pédagogique, scripts et README.
+  </li>
+</ul>
+
+
+      <h4>Captures </h4>
+      <p>Images :</p>
+
+      <figure class="arch-figure">
+        <img src="../assets/projet5/graph_ghidra.jpeg" alt="Graphe de contrôle (CFG) montrant la boucle infinie " class="arch-image"/>
+        <figcaption> graphe de contrôle (boucle identifiée)</figcaption>
+      </figure>
+
+
+      <figure class="arch-figure">
+        <img src="../assets/projet5/is_debug_1.png" alt="Preuve visuelle d'appel IsDebuggerPresent " class="arch-image"/>
+        <figcaption> preuve visuelle d'appel IsDebuggerPresent</figcaption>
+      </figure>
+
+      <figure class="arch-figure">
+        <img src="../assets/projet5/patch_isDebuggerPresent.png" alt="Comportement après patch pédagogique (sanitisé)" class="arch-image"/>
+        <figcaption> comportement après application du patch pédagogique</figcaption>
+      </figure>
+    </section>
+
+   
+
+    <section id="reco" class="card">
+      <h3>Recommandations &amp; contre-mesures (opérationnelles)</h3>
+      <ul>
+        <li>Isoler la machine suspecte (déconnecter du réseau, snapshot de la VM).</li>
+        <li>Surveiller et générer des alertes sur appels système sensibles : <code>VirtualAlloc</code> avec droits d’exécution, <code>CreateRemoteThread</code>, <code>WriteProcessMemory</code>.</li>
+        <li>Déployer un EDR capable de détecter les exécutions en mémoire et patterns d’offuscation .</li>
+      
+      </ul>
+    </section>
+
+    
+    <section class="card">
+      <h3>Compétences démontrées</h3>
+      <ul>
+        <li>Rétro-ingénierie (désassemblage, graphes de contrôle).</li>
+        <li>Analyse de malware : offuscation, injection mémoire.</li>
+        <li>Débogage  et contournement ..</li>
+        <li>Documentation forensic (rapports sanitisés et recommandations).</li>
+      </ul>
+    </section>
+
+    <p class="small">
+      <a href="../index.html#projects">← Retour aux projets</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>© 2025 Joseline Youego — Ingénieure Cybersécurité</p>
+    </div>
+  </footer>
+</body>
+</html>
