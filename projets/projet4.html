@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Sous-projet 4 — Réponse à Incident & Analyse Forensique</title>
+  <title>Réponse à Incident & Analyse Forensique</title>
   <link rel="stylesheet" href="../style.css" />
   <meta name="description" content="Blue Team : détection avec Wazuh, analyse mémoire Volatility, remédiation et durcissement." />
 </head>
@@ -56,7 +56,7 @@
             L’agent Wazuh a collecté les logs d’authentification (<code>/var/log/auth.log</code>) montrant de multiples tentatives échouées depuis <code>192.168.45.20</code>.
           </li>
           <li><strong>Analyse des alertes :</strong> le dashboard Wazuh a affiché en temps réel 703 alertes liées à l’activité suspecte, corrélées
-            avec le framework MITRE ATT&CK (T1110 - Brute Force). Règles déclenchées (exemples) : ID 5760 (échec d'auth SSH), ID 2502 (échecs multiples).
+            avec le framework MITRE ATT&CK (T1110 - Brute Force). Règles déclenchées : ID 5760 (échec d'auth SSH), ID 2502 (échecs multiples).
           </li>
           <li><strong>Conformité :</strong> possibilité de filtrer et d’aligner les événements avec des standards (ex. PCI-DSS).</li>
         </ul>
@@ -90,31 +90,24 @@
         <li><strong>Patch Management & Durcissement :</strong> déploiement de correctifs, mise en place de WAF, restrictions FTP/SSH, et règles réseau.</li>
       </ul>
 
-      <h4>Exemples de commandes défensives</h4>
-      <p>Commandes/directions utiles pour la remédiation (administrateur autorisé) :</p>
-      <pre><code># Exemple : désactiver l'accès FTP anonyme (vsftpd.conf)
+      <h4>Remédiation</h4>
+     
+      <pre><code># désactiver l'accès FTP anonyme (vsftpd.conf)
 # Dans /etc/vsftpd.conf
 anonymous_enable=NO
 
-# Exemple : activer et configurer Fail2Ban (basique)
+# activer et configurer Fail2Ban (basique)
 sudo apt install fail2ban
 # ensuite éditer /etc/fail2ban/jail.local pour activer la jail ssh
 
-# Exemple : blocage d'une IP suspecte (iptables)
+# blocage d'une IP suspecte (iptables)
 sudo iptables -A INPUT -s 192.168.45.20 -j DROP
 </code></pre>
 
-      <p class="small">Ces commandes sont destinées aux équipes de défense pour la remédiation et le durcissement.</p>
+     
     </section>
 
-    <section class="card">
-      <h3>Bonnes pratiques pour le rendu académique</h3>
-      <ul>
-        <li>Conserver les preuves brutes localement et ne publier que des versions redacted / synthétiques sur le web public.</li>
-        <li>Livrer les PoC sensibles via une archive chiffrée (GPG) à l'encadrant et communiquer la clé séparément.</li>
-        <li>Inclure une fiche d'autorisation signée précisant le cadre d'utilisation des PoC.</li>
-      </ul>
-    </section>
+    
 
     <p class="small">
       <a href="../index.html#projects">← Retour aux projets</a>
