@@ -25,9 +25,25 @@
   </header>
 
   <main class="wrap">
+    <!-- architecture image -->
+    <figure class="arch-figure">
+      <img src="../assets/architecture.png" alt="Schéma d'architecture réseau : pfSense, DMZ, Webservers, Wazuh, kali" class="arch-image"/>
+      <figcaption>Schéma de l'architecture réseau </figcaption>
+    </figure>
+  
+    <!-- lien vers l'infra Google Drive (placer directement sous le <figure>) -->
+<p class="infra-link">
+    <a href="https://drive.google.com/drive/folders/15aWWFLqg4ztTWTNyW5a9o76vVVQFWJB7?usp=sharinge"
+       target="_blank" rel="noopener noreferrer">
+      🔗 Accéder à l'archive de l'infrastructure (Google Drive)
+    </a>
+  </p>
+  
+
     <nav aria-label="breadcrumb" class="small" style="margin:.75rem 0;">
       <a href="../index.html">Accueil</a> › <a href="../index.html#projects">Projets</a> › Sous-projet 1
     </nav>
+      
 
     <article class="card">
       <h2>Sous-projet 1 : Conception et Sécurisation d'une Infrastructure Réseau (Architecture &amp; Hardening)</h2>
@@ -111,8 +127,59 @@
       </ul>
     </section>
 
+    <section id="firewall" class="card">
+        <h3>Règles de pare-feu (pfSense)</h3>
+        <p>Voici les règles mises en place pour sécuriser l’infrastructure, réparties par interface :</p>
+        
+        <figure class="arch-figure">
+          <img src="../assets/firewall/firewall_rules_wan.png" alt="Règles pfSense — WAN" class="arch-image"/>
+          <figcaption>Règles pfSense — WAN</figcaption>
+        </figure>
+  
+        <figure class="arch-figure">
+          <img src="../assets/firewall/firewall_rules_dmz.png" alt="Règles pfSense — DMZ / OPT1" class="arch-image"/>
+          <figcaption>Règles pfSense — DMZ (OPT1)</figcaption>
+        </figure>
+  
+        <figure class="arch-figure">
+          <img src="../assets/firewall/firewall_rules_webservers.png" alt="Règles pfSense — Webservers / OPT2" class="arch-image"/>
+          <figcaption>Règles pfSense — Webservers (OPT2)</figcaption>
+        </figure>
+  
+        <figure class="arch-figure">
+          <img src="../assets/firewall/firewall_rules_logging.png" alt="Règles pfSense — Logging / OPT3" class="arch-image"/>
+          <figcaption>Règles pfSense — Logging (OPT3)</figcaption>
+        </figure>
+  
+        <figure class="arch-figure">
+          <img src="../assets/firewall/firewall_rules_lan.png" alt="Règles pfSense — LAN" class="arch-image"/>
+          <figcaption>Règles pfSense — LAN</figcaption>
+        </figure>
+      </section>
+  
+      <section id="reverse-proxy" class="card">
+        <h3>Configuration du Reverse Proxy (NGINX)</h3>
+        <p>Le reverse proxy est configuré pour rediriger le trafic en fonction des chemins :</p>
+        <pre><code>
+  server {
+      listen 80;
+      server_name webapp.local;
+      
+      location / {
+          proxy_pass http://192.168.44.101;
+      }
+      
+      location /admin {
+          proxy_pass http://192.168.44.102;
+      }
+  }
+        </code></pre>
+        <p>Cette configuration permet de séparer l’accès public de l’application web (<code>/</code>) et l’administration (<code>/admin</code>), tout en centralisant les flux via un seul point d’entrée.</p>
+      </section>
+  
+
     <section id="competences" class="card">
-      <h3>Compétences Démontrées</h3>
+      <h3>Compétences Acquises</h3>
       <ul>
         <li> <strong>Architecture Réseau &amp; Sécurité</strong> : topologie cloisonnée multi-zones.</li>
         <li> <strong>Firewalling</strong> : pfSense, filtrage de flux interzones, approche ZTNA.</li>

