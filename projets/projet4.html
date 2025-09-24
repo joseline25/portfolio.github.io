@@ -30,7 +30,7 @@
     </nav>
 
     <article class="card">
-      <h2>Sous-projet 4 : Réponse à Incident et Analyse Forensique (Blue Team)</h2>
+      <h2>Sous-projet 4 : Réponse à Incident et Analyse Forensique</h2>
       <p>
         Jai essayer ici de passer du rôle d'attaquant à celui de défenseur. Le projet couvre la détection
         d'activités malveillantes avec un SIEM, l'analyse forensique pour comprendre une compromission, et la mise en œuvre
@@ -47,50 +47,39 @@
     </section>
 
     <section id="demarche" class="card">
-      <h3>Démarche &amp; Outils</h3>
-      <p>La démarche a été structurée en trois phases : détection (Wazuh), analyse mémoire (Volatility) et application de correctifs.</p>
+        <h3>Démarche &amp; Outils</h3>
+        <p>La démarche a été structurée en trois phases : détection (Wazuh), analyse mémoire (Volatility) et application de correctifs.</p>
+      
+        <h4>1. Détection d'Attaques avec le SIEM Wazuh</h4>
+        <ul>
+          <li><strong>Simulation et détection d’un brute force SSH :</strong> attaque lancée contre WebServer1 (outil de test en lab : <em>hydra</em>).
+            L’agent Wazuh a collecté les logs d’authentification (<code>/var/log/auth.log</code>) montrant de multiples tentatives échouées depuis <code>192.168.45.20</code>.
+          </li>
+          <li><strong>Analyse des alertes :</strong> le dashboard Wazuh a affiché en temps réel 703 alertes liées à l’activité suspecte, corrélées
+            avec le framework MITRE ATT&CK (T1110 - Brute Force). Règles déclenchées (exemples) : ID 5760 (échec d'auth SSH), ID 2502 (échecs multiples).
+          </li>
+          <li><strong>Conformité :</strong> possibilité de filtrer et d’aligner les événements avec des standards (ex. PCI-DSS).</li>
+        </ul>
+      
+        <!-- Captures Wazuh -->
+        <figure class="arch-figure">
+          <img src="../assets/projet4/web1_ssh_9_wazuh.png" alt="Wazuh - Alertes Password Guessing (Webserver1)" class="arch-image"/>
+          <figcaption>Wazuh - Alertes Password Guessing corrélées MITRE ATT&CK (Webserver1)</figcaption>
+        </figure>
+      
+        <figure class="arch-figure">
+          <img src="../assets/projet4/web1_ssh_7_wazuh.png" alt="Wazuh - Détails Technique T1110.001 Credential Access" class="arch-image"/>
+          <figcaption>Wazuh - Détails technique T1110.001 Credential Access (brute force SSH)</figcaption>
+        </figure>
+      
+        <figure class="arch-figure">
+          <img src="../assets/projet4/web1_ssh_6_wazuh.png" alt="Wazuh - Tableau de bord des événements SSH" class="arch-image"/>
+          <figcaption>Wazuh - Tableau de bord des événements corrélés (Webserver1)</figcaption>
+        </figure>
+      </section>
+      
 
-      <h4>1. Détection d'Attaques avec le SIEM Wazuh</h4>
-      <ul>
-        <li><strong>Simulation et détection d’un brute force SSH :</strong> attaque lancée contre WebServer1 (outil de test en lab : <em>hydra</em>).
-          L’agent Wazuh a collecté les logs d’authentification (<code>/var/log/auth.log</code>) montrant de multiples tentatives échouées depuis <code>192.168.45.20</code>.</li>
-        <li><strong>Analyse des alertes :</strong> le dashboard Wazuh a affiché en temps réel 703 alertes liées à l’activité suspecte, corrélées
-          avec le framework MITRE ATT&CK (T1110 - Brute Force). Règles déclenchées (exemples) : ID 5760 (échec d'auth SSH), ID 2502 (échecs multiples).</li>
-        <li><strong>Conformité :</strong> possibilité de filtrer et d’aligner les événements avec des standards (ex. PCI-DSS).</li>
-      </ul>
-
-      <h4>2. Analyse Mémoire (Forensic) avec Volatility</h4>
-      <ul>
-        <li><strong>Dump mémoire :</strong> création d’un dump mémoire sur WebServer2 pour analyse post-mortem.</li>
-        <li><strong>Investigation :</strong> utilisation de Volatility (ex. <code>linux.pslist</code>, <code>linux.sockstat</code>, <code>linux.lsof</code>) :
-          découverte de processus (vsftpd, sshd, apache2), connexions actives vers <code>192.168.1.101</code> (ports 21 &amp; 22), et fichiers ouverts suggérant des transferts.</li>
-      </ul>
-
-      <h4>3. Application des Correctifs et Durcissement</h4>
-      <p>Actions réalisées suite à la détection :</p>
-      <ul>
-        <li><strong>WebServer1 :</strong> analyse des logs Apache, déploiement d’un WAF (ModSecurity), correction du code vulnérable (requêtes préparées).</li>
-        <li><strong>WebServer2 :</strong> désactivation de l'accès FTP anonyme (<code>anonymous_enable=NO</code> dans <code>vsftpd.conf</code>).</li>
-        <li><strong>Windows 7 :</strong> désactivation SMBv1 et arrêt du service Print Spooler.</li>
-        <li><strong>Réseau :</strong> blocage de l’IP attaquante via pfSense/iptables, déploiement de Fail2Ban et durcissement SSH (<code>PermitRootLogin no</code>).</li>
-      </ul>
-    </section>
-
-    <section id="resultats" class="card">
-      <h3>Résultats et Livrables</h3>
-      <ul>
-        <li><strong>Captures d’écran Wazuh :</strong> détection en temps réel, classification MITRE ATT&CK, règles déclenchées.</li>
-        <li><strong>Rapport forensique :</strong> sorties Volatility détaillant processus, connexions et fichiers suspects.</li>
-        <li><strong>Liste de remédiations :</strong> commandes et configurations appliquées (Apache, VSFTPD, Windows, iptables, Fail2Ban).</li>
-      </ul>
-
-      <h4>Annexes</h4>
-      <p>Emplacements pour joindre les preuves :</p>
-      <ul>
-        <li><a href="../annexes/wazuh_screenshots.zip" target="_blank">Captures Wazuh (zip)</a> — (à ajouter en local si nécessaire)</li>
-        <li><a href="../annexes/forensic_report.pdf" target="_blank">Rapport Forensic (PDF)</a> — (placeholder)</li>
-      </ul>
-    </section>
+    
 
     <section id="competences" class="card">
       <h3>Compétences Démontrées</h3>
