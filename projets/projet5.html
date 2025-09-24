@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Rétro-ingénierie & Analyse de Malware (pédagogique)</title>
   <link rel="stylesheet" href="../style.css" />
-  <meta name="description" content="Analyse pédagogique et sanitisée d'un binaire suspect : rétro-ingénierie, anti-analyse, injection mémoire (documentation sans binaries)." />
+  <meta name="description" content="Analyse d'un binaire suspect : rétro-ingénierie, anti-analyse, injection mémoire (documentation sans binaries)." />
 </head>
 <body>
   <header class="site-header">
     <div class="wrap">
       <div class="header-left">
         <h1>Rétro-ingénierie d’un Programme Suspect</h1>
-        <p class="tagline">Analyse de malware (pédagogique & sanitisée) — laboratoire isolé</p>
+        <p class="tagline">Analyse de malware (pédagogique ) — laboratoire isolé</p>
       </div>
 
       <nav class="header-nav">
@@ -46,7 +46,7 @@
         <li>Comprendre le fonctionnement réel du programme depuis le binaire (désassemblage / CFG / decompilation).</li>
         <li>Identifier fonctionnalités indésirables (boucle infinie, exécution de commandes, DoS local).</li>
         <li>Détecter et contourner de façon contrôlée les mécanismes anti-analyse (IsDebuggerPresent, CheckRemoteDebuggerPresent).</li>
-        <li>Proposer et appliquer un patch pédagogique pour neutraliser la boucle infinie et l’anti-débogage (sanitisé).</li>
+        <li>Proposer et appliquer un patch pédagogique pour neutraliser la boucle infinie et l’anti-débogage.</li>
         <li>Documenter le mécanisme d’injection mémoire et expliquer les contre-mesures défensives.</li>
       </ul>
     </section>
@@ -58,7 +58,7 @@
         <li><strong>Observation comportementale</strong> — exécution contrôlée, surveillance CPU/I/O, captures réseau locales.</li>
         <li><strong>Analyse statique</strong> — désassemblage et décompilation (graphes CFG) avec IDA Pro / Ghidra.</li>
         <li><strong>Analyse dynamique</strong> — debugging en VM isolée (x64dbg / WinDbg) pour tracer appels API sensibles (IsDebuggerPresent, VirtualAlloc, system).</li>
-        <li><strong>Patching pédagogique</strong> — exemple de pattern (sanitisé) montrant comment neutraliser un test anti-débogage sans fournir d'offsets ni binaire.</li>
+        <li><strong>Patching pédagogique</strong> — exemple de pattern montrant comment neutraliser un test anti-débogage sans fournir d'offsets ni binaire.</li>
         <li><strong>Analyse d’injection mémoire</strong> — description du flux : offuscation XOR → VirtualAlloc (+PROT_EXEC) → copie → déchiffrement → exécution → nettoyage.</li>
       </ol>
 
@@ -106,7 +106,7 @@
       </figure>
 
       <figure class="arch-figure">
-        <img src="../assets/projet5/patch_isDebuggerPresent.png" alt="Comportement après patch pédagogique (sanitisé)" class="arch-image"/>
+        <img src="../assets/projet5/patch_isDebuggerPresent.png" alt="Comportement après patch " class="arch-image"/>
         <figcaption> comportement après application du patch pédagogique</figcaption>
       </figure>
     </section>
@@ -130,7 +130,7 @@
         <li>Rétro-ingénierie (désassemblage, graphes de contrôle).</li>
         <li>Analyse de malware : offuscation, injection mémoire.</li>
         <li>Débogage  et contournement ..</li>
-        <li>Documentation forensic (rapports sanitisés et recommandations).</li>
+        <li>Documentation forensic (rapports  et recommandations).</li>
       </ul>
     </section>
 
