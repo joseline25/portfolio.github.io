@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Challenge Forensic — Analyse de logs (ch13.txt)</title>
+  <link rel="stylesheet" href="../style.css" />
+  <meta name="description" content="Write-up : analyse temporelle d'une injection SQL aveugle (timing-based blind SQLi) – lecture de ch13.txt et script d'automatisation." />
+  <style>
+    /* petites règles locales pour mise en page du code et figures */
+    .code-block { background:#0f172a; color:#e6eef8; padding:1rem; border-radius:8px; overflow:auto; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .figure { margin:1rem 0; text-align:center; }
+    .figure img { max-width:100%; height:auto; border-radius:6px; box-shadow:0 6px 18px rgba(2,6,23,0.12); }
+    .note { background:#222221; border-left:4px solid #300cb1; padding:0.6rem; border-radius:6px; margin:0.75rem 0; }
+    .download { display:inline-block; margin-top:.5rem; padding:.4rem .6rem; background:#577caf; color:#fff; border-radius:6px; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="header-left">
+        <h1>Write-up : Analyse de Logs — Injection SQL aveugle (timing)</h1>
+       
+      </div>
+      <nav class="header-nav">
+        <a href="../index.html">Accueil</a>
+        <a href="#intro">Intro</a>
+        <a href="#decodage">Décodage</a>
+        <a href="#script">Script Python</a>
+        <a href="#resultat">Résultat & recommandations</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav aria-label="breadcrumb" class="small" style="margin:.75rem 0;">
+      <a href="../index.html">Accueil</a> › <a href="../index.html#projects">Projets</a> › Analyse de logs
+    </nav>
+
+    <article class="card" id="intro">
+      <h2>Introduction</h2>
+      <p>
+        Ce challenge présente des journaux HTTP contenant des requêtes malveillantes ciblant un paramètre
+        <code>order</code> encodé (URL → Base64). Après décodage la charge utile révèle une
+        <strong>injection SQL aveugle basée sur le temps</strong> (sleep() conditionnel) permettant
+        d'exfiltrer un mot de passe bit-par-bit en mesurant les délais entre requêtes.
+      </p>
+
+      <p class="note">
+        Remarque : ici on travaille sur <strong>ch13.txt et la méthode d'attaque est le timing-based blind SQLi.</strong> 
+      </p>
+
+      <p>
+        Le rapport et la résolution (document détaillé) sont disponibles en version PDF (rapport d’analyse). :contentReference[oaicite:1]{index=1}
+      </p>
+      <p>
+        <a class="download" href="rapport_analyse_log.pdf" target="_blank" rel="noopener">Télécharger le rapport </a>
+      </p>
+    </article>
+
+    <section class="card" id="decodage">
+      <h3>Décodage de la charge utile</h3>
+      <p>Étapes pour comprendre la payload :</p>
+      <ol>
+        <li>Extraire la valeur du paramètre <code>order=...</code> dans chaque requête.</li>
+        <li>URL-decoder la chaîne (convertir %3D → =, etc.).</li>
+        <li>Base64-decoder le résultat pour obtenir la requête SQL en clair.</li>
+      </ol>
+
+      <p>Après décodage on trouve une requête de type :</p>
+      <pre class="code-block">
+ASC,(select (case field(concat(substring(bin(ascii(substring(password,1,1))),1,1),
+substring(bin(ascii(substring(password,1,1))),2,1)),concat(char(48),char(48)),
+concat(char(48),char(49)),concat(char(49),char(48)),concat(char(49),char(49)))
+when 1 then TRUE when 2 then sleep(2) when 3 then sleep(4) when 4 then sleep(6) end)
+from membres where id=1)
+      </pre>
+
+      <p>
+        Interprétation : l'attaquant demande à la base de dormir un nombre de secondes différent
+        en fonction de la paire de bits testée (00 → 0s, 01 → 2s, 10 → 4s, 11 → 6s). En mesurant
+        les deltas temporels entre requêtes consécutives, on reconstruit les bits puis les caractères ASCII.
+      </p>
+    </section>
+
+    <section class="card" id="script">
+      <h3>Script Python d'automatisation (lit <code>ch13.txt</code>)</h3>
+      <p>Ce script lit <code>ch13.txt</code>, extrait les timestamps, calcule les deltas, convertit les deltas en bits, puis reconstruit le texte. Il gère le passage de minute heure et ignore les lignes non pertinentes.</p>
+
+      <pre class="code-block"><code># parser_ch13.py
+#!/usr/bin/env python3
+
+import sys
+from datetime import datetime, timedelta
+import re
+
+LOG_TIMESTAMP_RE = re.compile(r'\[(\d{2}/[A-Za-z]{3}/\d{4}:\d{2}:\d{2}:\d{2}) [+-]\d{4}\]')  # ex: [18/Jun/2015:12:12:54 +0200]
+
+def parse_seconds_from_line(line):
+    m = LOG_TIMESTAMP_RE.search(line)
+    if not m:
+        return None
+    ts_str = m.group(1)  # e.g. 18/Jun/2015:12:12:54
+    # parse using strptime
+    try:
+        dt = datetime.strptime(ts_str, "%d/%b/%Y:%H:%M:%S")
+        return dt
+    except Exception:
+        return None
+
+def delta_to_bits(delta_seconds):
+    # Map observed delta (rounded) to bit pairs
+    # Allow small tolerance (±0.6s) to be robust aux jitter
+    t = round(delta_seconds)
+    if abs(t - 0) <= 0:    return "00"
+    if abs(t - 2) <= 1:    return "01"
+    if abs(t - 4) <= 1:    return "10"
+    if abs(t - 6) <= 1:    return "11"
+    return None
+
+def main(path):
+    times = []
+    with open(path, "r", encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            # on ne prend que les lignes qui contiennent la payload (ici on peut filtrer sur 'order=')
+            if "order=" not in line:
+                continue
+            dt = parse_seconds_from_line(line)
+            if dt:
+                times.append(dt)
+
+    if len(times) < 2:
+        print("Pas assez d'entrées trouvées dans", path)
+        return
+
+    # calcul des deltas en secondes entre requêtes consécutives
+    deltas = []
+    for i in range(len(times)-1):
+        d = (times[i+1] - times[i]).total_seconds()
+        # si négatif => passage d'une minute/heure/jour : normaliser en ajoutant 60s si petite différence
+        if d < 0:
+            d += 60
+        deltas.append(d)
+
+    # regrouper chaque 4 deltas -> un caractère (3 * 2bits + 1 * 1bit)
+    chars = []
+    i = 0
+    while i + 3 <= len(deltas):
+        group = deltas[i:i+4]     # 4 requêtes par caractère (3 double-bits + 1 single-bit)
+        bits = ""
+        ok = True
+        # 3 premières donnent 2 bits chacune
+        for j in range(3):
+            b = delta_to_bits(group[j])
+            if b is None:
+                ok = False
+                break
+            bits += b
+        # 4ème delta encode 1 bit : selon convention présente dans l'énoncé on fera une heuristique :
+        last = round(group[3])
+        if last in (0,):  # assume 0 => final bit 0
+            bits += "0"
+        else:
+            # si 2 (ou proche), considerer '1' — dépend du challenge; on ajuste avec tolérance
+            bits += "1" if abs(last - 2) <= 1 else "0"
+        if ok and len(bits) == 7:
+            try:
+                c = chr(int(bits, 2))
+            except Exception:
+                c = '?'
+            chars.append(c)
+        else:
+            chars.append('?')
+        i += 4
+
+    flag = "".join(chars)
+    print("Résultat (reconstruit) :", flag)
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python3 parser_ch13.py ch13.txt")
+    else:
+        main(sys.argv[1])
+</code></pre>
+
+      
+    </section>
+
+    <section class="card" id="resultat">
+      <h3>Recommandations</h3>
+      <p>
+        En appliquant cette méthode on reconstitue le mot de passe exfiltré étape par étape.
+        
+      </p>
+      <ul>
+        <li>Décoder et archiver chaque payload (URL → Base64 → SQL) comme preuve.</li>
+        <li>Corréler IP source (192.168.1.23) avec autres journaux réseau / DHCP.</li>
+        <li>Mettre en place du rate-limiting et des signatures d’anomalies temporelles (alerts sur séries de sleep()).</li>
+        <li>Corriger le code vulnérable avec <strong>prepared statements</strong> / requêtes paramétrées.</li>
+      </ul>
+    </section>
+
+    
+
+    <p class="small">
+      <a href="../index.html#projects">← Retour aux projets</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>© 2025 Joseline Youego — Ingénieure Cybersécurité</p>
+    </div>
+  </footer>
+</body>
+</html>
