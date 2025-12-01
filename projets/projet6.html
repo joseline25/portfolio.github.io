@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Portail d’Accès Zero Trust — SecureCorp</title>
+  <link rel="stylesheet" href="../style.css" />
+  <meta name="description"
+        content="Preuve de concept Zero Trust : PKI, Vault, Keycloak, Nginx et application Python intégrés via Infrastructure as Code." />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="header-left">
+        <h1>Portfolio — Joseline Youego</h1>
+        <p class="tagline">Sécurité des SI • PKI • IAM • Zero Trust</p>
+      </div>
+      <nav class="header-nav">
+        <a href="../index.html">Accueil</a>
+        <a href="#objectif">Objectif</a>
+        <a href="#archi">Architecture & Scénario</a>
+        <a href="#demarche">Démarche</a>
+        <a href="#resultats">Résultats</a>
+        <a href="#competences">Compétences</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav aria-label="breadcrumb" class="small" style="margin:.75rem 0;">
+      <a href="../index.html">Accueil</a> ›
+      <a href="../index.html#projects">Projets</a> ›
+      Portail Zero Trust SecureCorp
+    </nav>
+
+    <article class="card">
+      <h2>Portail d’Accès Zero Trust pour une entreprise fictive (SecureCorp)</h2>
+      <p>
+        Ce projet est une <strong>preuve de concept d’architecture Zero Trust</strong> :
+        j’y conçois et déploie un portail d’accès sécurisé pour l’entreprise fictive
+        <strong>SecureCorp</strong>, en intégrant une PKI interne, un
+        <strong>Identity Provider Keycloak</strong>, un <strong>gestionnaire de secrets HashiCorp Vault</strong>,
+        un reverse proxy <strong>Nginx</strong> et une application <strong>Python</strong>.
+      </p>
+      <p>
+        L’objectif n’est pas seulement d’installer des outils, mais de montrer une
+        <strong>chaîne de confiance complète, automatisée et documentée</strong> :
+        <em>PKI → IAM → Reverse Proxy → Application</em>, déployée via
+        <strong>Infrastructure as Code</strong>.
+      </p>
+    </article>
+
+    <!-- OBJECTIF -->
+    <section id="objectif" class="card">
+      <h3>Objectif</h3>
+      <p>
+        Dans ce scénario, je joue le rôle d’ingénieure sécurité pour
+        l’entreprise fictive <strong>SecureCorp</strong>, qui dispose d’un
+        portail employé sensible historiquement accessible uniquement sur le réseau interne,
+        sans chiffrement systématique et avec des logins locaux.
+      </p>
+      <p>Ma mission :</p>
+      <ul>
+        <li>Permettre l’accès au portail en <strong>télétravail</strong> (sans VPN dédié).</li>
+        <li>Supprimer les logins locaux et mettre en place une
+          <strong>authentification centralisée (SSO)</strong> via Keycloak.</li>
+        <li>Assurer le <strong>chiffrement de bout en bout</strong> (PKI interne, HTTPS partout).</li>
+        <li>Appliquer le <strong>principe du moindre privilège</strong> avec des
+          <strong>secrets dynamiques</strong> gérés par Vault.</li>
+      </ul>
+
+      <p>Trois règles d’or structurent l’architecture :</p>
+      <ol>
+        <li><strong>Nul ne passe sans identité (IAM)</strong> : l’application ne gère plus les mots de passe,
+          toute authentification passe par Keycloak (OIDC/OAuth2).</li>
+        <li><strong>Chiffrement partout (PKI)</strong> : Vault expose une PKI interne qui émet les certificats pour
+          HTTPS et, à terme, le mTLS entre services.</li>
+        <li><strong>Secrets éphémères</strong> : les identifiants de base de données sont générés à la volée par Vault
+          (moteur <code>database</code>) avec un TTL limité.</li>
+      </ol>
+    </section>
+
+    <!-- ARCHITECTURE & SCENARIO -->
+    <section id="archi" class="card">
+      <h3>Architecture & Scénario </h3>
+
+      <p>L’architecture est déployée via <strong>Vagrant</strong> sur trois machines virtuelles :</p>
+
+      <ul>
+        <li>
+          <strong>srv-sec-core (192.168.56.10)</strong><br />
+          <em>HashiCorp Vault (PKI + secrets dynamiques), Keycloak (IdP), PostgreSQL</em>.<br />
+          C’est le “coffre-fort” : il émet les certificats, gère les identités et les secrets.
+        </li>
+        <li>
+          <strong>srv-gateway (192.168.56.30)</strong><br />
+          <em>Nginx (reverse proxy)</em> — unique point d’entrée exposé.<br />
+          Termine le HTTPS avec les certificats Vault et redirige vers l’application / Keycloak.
+        </li>
+        <li>
+          <strong>srv-app-prod (192.168.56.20)</strong><br />
+          <em>Application Python (Flask/Gunicorn)</em> — portail employé.<br />
+          Délègue l’authentification à Keycloak (OIDC) et ne voit que des jetons.
+        </li>
+      </ul>
+
+      <figure class="arch-figure">
+        <img
+          src="../assets/projet6/portfolio-architecture.png"
+          alt="Architecture Zero Trust : Vault, Keycloak, Nginx et application Python"
+          class="arch-image"
+        />
+        <figcaption>
+          Flux métier : l’utilisateur accède à <code>https://portal.securecorp.local:8443</code>,
+          est redirigé vers Keycloak, puis revient avec un code d’autorisation
+          que l’application échange contre un jeton OIDC.
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- DEMARCHE & OUTILS -->
+    <section id="demarche" class="card">
+      <h3>La démarche et les outils</h3>
+
+      <ol>
+        <li>
+          <h4>Déploiement de l’infrastructure virtuelle (IaC)</h4>
+          <p>
+            L’infrastructure est décrite dans un <code>Vagrantfile</code> :
+            3 VMs Ubuntu 22.04, IPs statiques, DNS local simulé via <code>/etc/hosts</code>.
+          </p>
+          <pre><code># Création des VMs
+vagrant up
+
+# Vérifier l'état des machines
+vagrant status
+
+# Connexion au coeur de sécurité
+vagrant ssh sec-core</code></pre>
+        </li>
+
+        <li>
+          <h4>Phase 1 — Cœur de sécurité : Vault &amp; PKI interne</h4>
+          <p>
+            Sur <strong>srv-sec-core</strong>, j’installe Vault, je le gère en service
+            <code>systemd</code> et je construis une PKI à deux niveaux (Root CA + Intermediate CA).
+          </p>
+          <pre><code># Activer la Root CA
+vault secrets enable pki
+vault secrets tune -max-lease-ttl=87600h pki
+
+# Générer la Root CA
+vault write -field=certificate pki/root/generate/internal \
+  common_name="SecureCorp Root CA" ttl=87600h &gt; root_ca.crt
+
+# Activer l'Intermediate CA
+vault secrets enable -path=pki_int pki
+vault secrets tune -max-lease-ttl=43800h pki_int
+
+# Rôle pour *.securecorp.local
+vault write pki_int/roles/securecorp-dot-local \
+  allowed_domains="securecorp.local" \
+  allow_subdomains=true max_ttl="72h"</code></pre>
+        </li>
+
+        <li>
+          <h4>Phase 2 — Identity Provider Keycloak + secrets dynamiques</h4>
+          <p>
+            Keycloak utilise PostgreSQL, mais ses identifiants ne sont jamais stockés en clair :
+            ils sont fournis à chaque démarrage par Vault (moteur <code>database</code>).
+          </p>
+          <pre><code># Prérequis : Java 17 + PostgreSQL
+sudo apt-get install -y openjdk-17-jdk postgresql postgresql-contrib
+
+# Utilisateur admin pour Vault côté DB
+sudo -u postgres psql -c \
+  "CREATE USER vault WITH SUPERUSER ENCRYPTED PASSWORD 'vault-root-password';"
+
+# Activer le moteur database
+vault secrets enable database
+
+# Définir le rôle keycloak-role (secrets dynamiques)
+vault write database/roles/keycloak-role \
+  db_name=postgresql \
+  creation_statements="CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' SUPERUSER; \
+                       GRANT ALL PRIVILEGES ON DATABASE keycloak TO \"{{name}}\";" \
+  default_ttl="1h" max_ttl="24h"</code></pre>
+
+          <p>
+            Un script wrapper <code>start_with_vault.sh</code> demande d’abord des
+            credentials à Vault, puis lance Keycloak avec <code>$KC_DB_USERNAME</code> /
+            <code>$KC_DB_PASSWORD</code> injectés en variables d’environnement.
+          </p>
+        </li>
+
+        <li>
+          <h4>Phases suivantes — Gateway Nginx &amp; intégration OIDC</h4>
+          <p>
+            Sur <strong>srv-gateway</strong>, Nginx termine le HTTPS avec les certificats Vault
+            et reverse-proxifie vers l’application et Keycloak. L’application Python est
+            ensuite configurée pour suivre le flux OIDC complet (authorization code).
+          </p>
+          <p>
+            Plusieurs incidents réels ont été rencontrés et résolus : erreurs 502,
+            problèmes de droits PostgreSQL, message <em>“Local access required”</em> de Keycloak,
+            nécessitant un tunnel SSH (<code>vagrant ssh sec-core -- -L 8888:localhost:8080</code>)
+            et une réinitialisation contrôlée de la base.
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- RESULTATS -->
+    <section id="resultats" class="card">
+      <h3>Résultats &amp; Valeur Ajoutée</h3>
+      <ul>
+        <li>
+          <strong>Flux d’authentification complet</strong> :
+          accès au portail via Nginx (HTTPS/PKI Vault), redirection vers Keycloak,
+          retour avec code OIDC, échange de code contre jeton, ouverture de session.
+        </li>
+        <li>
+          <strong>Infrastructure reproductible</strong> :
+          un clone du dépôt + <code>vagrant up</code> suffisent à recréer l’environnement.
+        </li>
+        <li>
+          <strong>Gestion centralisée des secrets</strong> :
+          les identifiants DB de Keycloak sont dynamiques, générés et révoqués par Vault.
+        </li>
+        <li>
+          <strong>Documentation technique complète</strong> :
+          diagrammes d’architecture, DAT, write-up des incidents et des correctifs.
+        </li>
+      </ul>
+
+      <figure class="arch-figure">
+        <img
+          src="../assets/projet6/portfolio-logging-reussi.png"
+          alt="Connexion réussie au portail SecureCorp via Keycloak"
+          class="arch-image"
+        />
+        <figcaption>
+          Flux SSO fonctionnel : l’utilisateur est authentifié via Keycloak
+          et déjà connecté au portail SecureCorp.
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- COMPETENCES -->
+    <section id="competences" class="card">
+      <h3>Compétences démontrées</h3>
+      <ul>
+        <li><strong>PKI &amp; Cryptographie appliquée</strong> :
+          mise en place d’une PKI interne (Root + Intermediate CA) avec Vault,
+          émission de certificats pour HTTPS.</li>
+        <li><strong>IAM &amp; SSO</strong> :
+          déploiement de Keycloak, configuration d’un realm, d’un client OIDC et du flux
+          authorization code.</li>
+        <li><strong>Gestion des secrets</strong> :
+          utilisation du moteur <code>database</code> de Vault pour générer des identifiants
+          PostgreSQL éphémères.</li>
+        <li><strong>Infrastructure as Code</strong> :
+          définition de l’infrastructure avec Vagrant, provisioning automatisé, services systemd.</li>
+        <li><strong>Ingénierie système &amp; troubleshooting</strong> :
+          analyse de logs <code>journalctl</code>, résolution d’erreurs PostgreSQL
+          (<code>permission denied</code>), message
+          <em>“Local access required”</em>, tunnels SSH, réinitialisation guidée de la base.</li>
+        <li><strong>Documentation & vulgarisation technique</strong> :
+          rédaction d’un Document d’Architecture Technique (DAT) et d’un scénario métier lisible
+          par un recruteur technique.</li>
+      </ul>
+    </section>
+
+    <p class="small">
+      <a href="../index.html#projects">← Retour aux projets</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>© 2025 Joseline Youego — Ingénieure Cybersécurité</p>
+    </div>
+  </footer>
+</body>
+</html>
