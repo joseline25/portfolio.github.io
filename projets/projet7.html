@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Laboratoire IAM — Provisioning automatique JML</title>
+  <link rel="stylesheet" href="../style.css" />
+  <meta
+    name="description"
+    content="Laboratoire IAM : annuaire LDAP, application SaaS simulée et moteur de provisioning Python pour automatiser le cycle Joiner / Mover / Leaver."
+  />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="header-left">
+        <h1>Portfolio — Joseline Youego</h1>
+        <p class="tagline">IAM • Provisioning • Intégration applicative</p>
+      </div>
+      <nav class="header-nav">
+        <a href="../index.html">Accueil</a>
+        <a href="#objectif">Contexte & Objectif</a>
+        <a href="#archi">Architecture & Scénario</a>
+        <a href="#demarche">Démarche</a>
+        <a href="#resultats">Résultats</a>
+        <a href="#competences">Compétences</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav aria-label="breadcrumb" class="small" style="margin:.75rem 0;">
+      <a href="../index.html">Accueil</a> ›
+      <a href="../index.html#projects">Projets</a> ›
+      Laboratoire IAM Provisioning
+    </nav>
+
+    <article class="card">
+      <h2>Laboratoire IAM — Provisioning automatique entre LDAP et application SaaS</h2>
+      <p>
+        Ce projet est un <strong>laboratoire d’intégration IAM</strong> que j’ai monté pour
+        comprendre en profondeur les défis techniques du provisioning d’identités entre un
+        annuaire et une application métier.
+      </p>
+      <p>
+        Le principe est simple : simuler un <em>réseau d’entreprise</em> avec un annuaire
+        LDAP (source de vérité), une application cible de type SaaS (API REST) et un serveur
+        de contrôle jouant le rôle de <em>moteur IAM</em>.  
+        L’objectif est d’automatiser le cycle de vie <strong>JML (Joiner, Mover, Leaver)</strong>
+        de bout en bout.
+      </p>
+    </article>
+
+    <!-- CONTEXTE & OBJECTIF -->
+    <section id="objectif" class="card">
+      <h3>Contexte & Objectif</h3>
+
+      <p>
+        <strong>Le contexte :</strong> « Je voulais comprendre les défis techniques de
+        l'intégration d'application. J'ai donc monté un laboratoire simulant un réseau
+        d'entreprise. »
+      </p>
+
+      <p>
+        Ce réseau est réduit mais réaliste : l’annuaire représente un Active Directory,
+        l’application cible un SaaS interne, et le serveur de contrôle un moteur IAM qui
+        orchestre la synchronisation.
+      </p>
+
+      <p>
+        <strong>Le challenge technique :</strong> « Mon objectif était d'automatiser le cycle
+        de vie <strong>JML (Joiner, Mover, Leaver)</strong>. »
+      </p>
+
+      <ul>
+        <li>
+          <strong>Joiner :</strong> quand je crée un utilisateur dans le LDAP, un script Python
+          le détecte et crée automatiquement le compte dans l’application cible.
+        </li>
+        <li>
+          <strong>Mover :</strong> une matrice de rôles (RBAC) mappe les groupes LDAP vers les
+          rôles de l’application. Si l'utilisateur est dans le groupe <code>Finance</code>,
+          il obtient automatiquement un rôle avancé dans l’application
+          (ex&nbsp;: <code>FINANCIAL_CONTROLLER</code>).
+        </li>
+        <li>
+          <strong>Leaver :</strong> si l'utilisateur est désactivé dans le LDAP, le script coupe
+          automatiquement ses accès sur l'application (déprovisioning).
+        </li>
+      </ul>
+
+      <p>
+        <strong>Conclusion technique :</strong> « Cela m'a permis de maîtriser les librairies
+        Python comme <code>ldap3</code> et <code>requests</code>, et de comprendre
+        l'importance d'avoir une <em>source de vérité</em> fiable pour les identités. »
+      </p>
+    </section>
+
+    <!-- ARCHITECTURE & SCENARIO -->
+    <section id="archi" class="card">
+      <h3>Architecture & Scénario</h3>
+
+      <p>
+        <strong>L’architecture :</strong> « J'ai déployé 3 serveurs sous Linux : un
+        <strong>LDAP</strong> (simulant l'Active Directory), une
+        <strong>Application Cible</strong> (simulant un SaaS avec une API REST), et un
+        <strong>Serveur de Contrôle</strong>. »
+      </p>
+
+      <ul>
+        <li>
+          <strong>iam-ldap (192.168.56.10)</strong><br />
+          <em>OpenLDAP</em> — annuaire d’entreprise simulé.<br />
+          Contient les unités organisationnelles, les groupes et les comptes d’utilisateurs
+          (ex : <code>Alice</code> active, <code>Bob</code> inactif).
+        </li>
+        <li>
+          <strong>iam-app (192.168.56.20)</strong><br />
+          <em>Application Flask</em> exposant une API REST
+          <code>/api/users</code> — simule un SaaS interne.<br />
+          Les comptes sont créés/supprimés via des appels HTTP
+          <code>POST</code> / <code>DELETE</code>.
+        </li>
+        <li>
+          <strong>iam-control (192.168.56.30)</strong><br />
+          <em>Serveur de contrôle</em> — moteur IAM.<br />
+          Exécute le script Python <code>provisioning_engine.py</code> qui lit le LDAP
+          et appelle l’API de <code>iam-app</code>.
+        </li>
+      </ul>
+
+      <figure class="arch-figure">
+        <img
+          src="../assets/projet7/iam-architecture.png"
+          alt="Architecture IAM : LDAP, Application Cible, Serveur de Contrôle"
+          class="arch-image"
+        />
+        <figcaption>
+          Flux JML : l’annuaire LDAP est la source de vérité, le serveur de contrôle
+          synchronise automatiquement les comptes vers l’application cible via API REST.
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- DEMARCHE & SCRIPTS -->
+    <section id="demarche" class="card">
+      <h3>Démarche & Scripts principaux</h3>
+
+      <h4>Infra as Code : création du labo avec Vagrant</h4>
+      <p>
+        L’ensemble du laboratoire est décrit dans un <code>Vagrantfile</code> unique :
+        il déploie les 3 VMs Ubuntu, attribue les IP privées et installe les dépendances
+        (OpenLDAP, Flask, Python, bibliothèques IAM).
+      </p>
+
+      <pre><code># Lancer toute l'infrastructure
+vagrant up
+
+# Vérifier l'état des machines
+vagrant status
+
+# Exemple : se connecter à l'annuaire
+vagrant ssh iam-ldap</code></pre>
+
+      <h4>Source de vérité : annuaire LDAP</h4>
+      <p>
+        Sur <strong>iam-ldap</strong>, l’annuaire est configuré avec le domaine
+        <code>dc=iam,dc=lab</code> et alimenté via un fichier
+        <code>users.ldif</code> (unités organisationnelles, groupe
+        <code>Finance</code>, utilisateurs Alice et Bob avec un statut
+        <code>Active</code> / <code>Inactive</code>).
+      </p>
+
+      <pre><code># Injection des entrées LDAP (Alice & Bob)
+ldapadd -x -D "cn=admin,dc=iam,dc=lab" -w admin -f users.ldif
+
+# Vérification de l'annuaire
+ldapsearch -x -b "dc=iam,dc=lab" "(objectClass=inetOrgPerson)"</code></pre>
+
+      <h4>Application Cible : API Flask</h4>
+      <p>
+        Sur <strong>iam-app</strong>, une petite application Flask
+        <code>dummy_app.py</code> expose l’API <code>/api/users</code> et journalise
+        chaque opération dans <code>/var/log/dummy_app.log</code>.  
+        Elle est exécutée comme un service <code>systemd</code> pour se rapprocher
+        d’un comportement de production.
+      </p>
+
+      <pre><code># Exemple de test initial côté iam-app
+curl http://localhost:5000/api/users
+# Réponse attendue : {} (aucun compte provisionné au départ)</code></pre>
+
+      <h4>Moteur IAM : script de provisioning</h4>
+      <p>
+        Sur <strong>iam-control</strong>, le script
+        <code>provisioning_engine.py</code> implémente la logique IAM :
+        lecture des entrées LDAP avec <code>ldap3</code>, construction
+        d’un identifiant technique (<code>a.dupont</code>, etc.),
+        mapping groupe → rôle métier, appels à l’API via
+        <code>requests</code> pour créer ou supprimer les comptes.
+      </p>
+
+      <pre><code># Lancer un cycle de provisioning
+python3 provisioning_engine.py</code></pre>
+    </section>
+
+    <!-- RESULTATS -->
+    <section id="resultats" class="card">
+      <h3>Résultats</h3>
+
+      <p>
+        Lors d’un cycle complet, le moteur affiche par exemple :
+      </p>
+
+      <pre><code>--- Démarrage du Cycle de Provisioning ---
+[INFO] Connexion au serveur LDAP iam-ldap...
+[INFO] 2 identités trouvées dans l'annuaire.
+[PROVISION] Traitement de a.dupont (Rôle: FINANCIAL_CONTROLLER)...
+   -> Succès (Compte créé/mis à jour).
+[DE-PROVISION] Départ détecté pour b.martin. Suppression des accès...
+   -> Succès (Compte supprimé).
+--- Fin du Cycle ---</code></pre>
+
+      <p>
+        En interrogeant ensuite l’API de l’application cible depuis
+        <strong>iam-control</strong> :
+      </p>
+
+      <pre><code>curl http://iam-app:5000/api/users</code></pre>
+
+      <p>La réponse JSON montre uniquement le compte actif :</p>
+
+      <pre><code>{
+  "a.dupont": {
+    "email": "a.dupont@company.com",
+    "fullname": "Alice Dupont",
+    "role": "FINANCIAL_CONTROLLER"
+  }
+}</code></pre>
+
+      <p>
+        <strong>Interprétation :</strong> Alice est présente avec le rôle correct
+        dérivé de son groupe LDAP. Bob, marqué <code>Inactive</code> dans
+        l’annuaire, a été automatiquement déprovisionné côté application.
+      </p>
+
+      <figure class="arch-figure">
+        <img
+          src="../assets/projet7/iam-provisioning-result.png"
+          alt="Résultat JSON de l'API users après provisioning"
+          class="arch-image"
+        />
+        <figcaption>
+          Synchronisation réussie : l’état de l’application reflète exactement
+          la source de vérité LDAP après le cycle JML.
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- COMPETENCES -->
+    <section id="competences" class="card">
+      <h3>Compétences démontrées</h3>
+      <ul>
+        <li>
+          <strong>IAM & Provisioning</strong> :
+          conception d’un petit moteur de réconciliation implémentant
+          le cycle Joiner / Mover / Leaver.
+        </li>
+        <li>
+          <strong>Annuaire LDAP</strong> :
+          modélisation de l’arborescence, création des unités, groupes et
+          utilisateurs, requêtes LDAP avec <code>ldapsearch</code> et
+          la bibliothèque <code>ldap3</code>.
+        </li>
+        <li>
+          <strong>APIs REST & intégration applicative</strong> :
+          conception d’une API cible simple et intégration via
+          <code>requests</code> côté Python.
+        </li>
+        <li>
+          <strong>Infrastructure as Code & Linux</strong> :
+          création d’un laboratoire multi-VM avec Vagrant, configuration
+          automatique des paquets et des services <code>systemd</code>.
+        </li>
+        <li>
+          <strong>Ingénierie système & debugging</strong> :
+          analyse des logs, tests croisés avec <code>curl</code>,
+          validation du comportement JML en observant les journaux
+          de l’application cible.
+        </li>
+        <li>
+          <strong>Vulgarisation & documentation</strong> :
+          capacité à raconter un scénario métier (JML) au-dessus de briques
+          techniques (LDAP, API REST, Python).
+        </li>
+      </ul>
+
+      <p class="small">
+        <!-- Ouvrir la documentation PDF dans le navigateur -->
+        <a href="../assets/projet7/iam-provisioning-poc.pdf"
+           target="_blank" rel="noopener">
+          Documentation du laboratoire (PDF)
+        </a>
+      </p>
+
+      <p class="small">
+        <!-- Lien vers le repo GitHub -->
+        <a href="https://github.com/joseline25/iam-provisioning"
+           target="_blank" rel="noopener">
+          Code source sur GitHub — <code>iam-provisioning-poc</code>
+        </a>
+      </p>
+    </section>
+
+    <p class="small">
+      <a href="../index.html#projects">← Retour aux projets</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>© 2025 Joseline Youego — Ingénieure Cybersécurité</p>
+    </div>
+  </footer>
+</body>
+</html>
