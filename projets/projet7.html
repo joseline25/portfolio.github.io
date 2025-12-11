@@ -202,6 +202,48 @@ curl http://localhost:5000/api/users
 
       <pre><code># Lancer un cycle de provisioning
 python3 provisioning_engine.py</code></pre>
+
+      <!--  AJOUT : AUTOMATISATION CRON + LOGS -->
+      <h4>Automatisation du moteur IAM avec <code>cron</code> et supervision par les logs</h4>
+      <p>
+        Une fois la logique validée manuellement, j’ai automatisé le moteur de provisioning
+        pour qu’il s’exécute régulièrement sans intervention humaine, comme le ferait un
+        outil IAM en production.
+      </p>
+
+      <p>
+        Sur <strong>iam-control</strong>, le script est exécuté en tâche planifiée via
+        <code>cron</code>. La crontab de l’utilisateur <code>vagrant</code> contient
+        par exemple&nbsp;:
+      </p>
+
+      <pre><code># Édition de la crontab
+crontab -e
+
+# Tâche planifiée : exécution du moteur toutes les minutes
+* * * * * /usr/bin/python3 /home/vagrant/provisioning_engine.py \
+    >> /home/vagrant/iam_sync.log 2>&amp;1</code></pre>
+
+      <p>
+        Cette configuration lance un cycle JML toutes les minutes et redirige les messages
+        (informations et erreurs) vers le fichier
+        <code>/home/vagrant/iam_sync.log</code>, qui sert de journal d’exécution.
+      </p>
+
+      <p>
+        Pour superviser le comportement du moteur en temps réel, je peux suivre ce fichier
+        depuis <strong>iam-control</strong> :
+      </p>
+
+      <pre><code># Suivi des cycles d'exécution en temps réel
+tail -f /home/vagrant/iam_sync.log</code></pre>
+
+      <p>
+        Cela permet de voir apparaître, à intervalle régulier, les cycles de synchronisation
+        et les décisions de provisioning / déprovisioning (par exemple la réactivation de
+        <code>b.martin</code> côté LDAP qui entraîne automatiquement la création de son
+        compte dans l’application lors du cycle suivant).
+      </p>
     </section>
 
     <!-- RESULTATS -->
