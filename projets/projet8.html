@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Audit technique automatisé et analyse EBIOS RM</title>
+  <link rel="stylesheet" href="../style.css" />
+  <meta
+    name="description"
+    content="Audit de conformité automatisé d’un serveur Ubuntu avec OpenSCAP, traduction des résultats techniques en analyse de risques EBIOS RM et validation par rescan après durcissement."
+  />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="header-left">
+        <h1>Portfolio — Joseline Youego</h1>
+        <p class="tagline">Audit technique • Conformité • Analyse de risques</p>
+      </div>
+      <nav class="header-nav">
+        <a href="../index.html">Accueil</a>
+        <a href="#objectif">Contexte & objectif</a>
+        <a href="#perimetre">Périmètre audité</a>
+        <a href="#demarche">Démarche</a>
+        <a href="#resultats">Résultats</a>
+        <a href="#competences">Compétences</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <nav aria-label="breadcrumb" class="small" style="margin:.75rem 0;">
+      <a href="../index.html">Accueil</a> ›
+      <a href="../index.html#projects">Projets</a> ›
+      Audit OpenSCAP & EBIOS RM
+    </nav>
+
+    <article class="card">
+      <h2>Audit technique automatisé et cartographie des risques (OpenSCAP + EBIOS RM)</h2>
+      <p>
+        Ce projet met en place une chaîne complète d’audit technique et d’analyse de risques
+        sur un serveur Ubuntu déjà utilisé dans un laboratoire IAM. L’objectif est de montrer
+        la capacité à conduire un audit de conformité automatisé, à interpréter les résultats
+        techniques et à les traduire en scénarios de risques formalisés suivant l’approche
+        EBIOS RM.
+      </p>
+      <p>
+        Le travail se déroule en quatre phases : réalisation d’un scan de conformité avec
+        OpenSCAP, sélection et formalisation de plusieurs risques à partir des résultats,
+        rédaction et exécution d’un script de durcissement, puis rescan pour vérifier
+        l’efficacité des mesures.
+      </p>
+    </article>
+
+    <section id="objectif" class="card">
+      <h3>Contexte et objectif</h3>
+      <p>
+        Le contexte général est celui d’un serveur applicatif Linux exposant une API, déjà
+        utilisé dans un laboratoire de provisioning IAM. Dans de nombreuses organisations,
+        ces serveurs sont critiques et doivent respecter des référentiels de sécurité
+        comme les recommandations CIS ou les guides de l’ANSSI.
+      </p>
+      <p>
+        L’objectif du projet est double. D’une part, mettre en œuvre un
+        audit technique automatisé à l’aide d’OpenSCAP et d’un profil de conformité pour
+        Ubuntu 20.04. D’autre part, sélectionner plusieurs non-conformités significatives
+        et les traduire en fiches de risques, structurées selon les principes d’EBIOS RM
+        (biens, sources de menace, scénarios, impacts et mesures de sécurité).
+      </p>
+      <p>
+        Ce projet illustre ainsi le passage d’un diagnostic purement technique
+        à une vision orientée risques, en s’appuyant sur des preuves générées
+        automatiquement et sur des mesures de remédiation concrètes.
+      </p>
+    </section>
+
+    <section id="perimetre" class="card">
+      <h3>Périmètre et architecture audités</h3>
+      <p>
+        Le travail s’appuie sur l’infrastructure virtualisée du laboratoire IAM.
+        La machine cible de l’audit est le serveur applicatif
+        <code>iam-app</code> (Ubuntu 20.04), qui héberge une API Flask et tourne
+        comme service système. Les autres machines de l’environnement ne sont pas
+        concernées par ce projet et servent uniquement de contexte.
+      </p>
+      <p>
+        Sur la machine <code>iam-app</code>, l’outil OpenSCAP est installé à partir
+        des dépôts de la distribution. La vérification de l’installation se fait
+        avec les commandes suivantes.
+      </p>
+
+      <pre><code>vagrant ssh iam-app
+
+sudo apt install libopenscap8
+
+which oscap
+oscap -V</code></pre>
+
+      <p>
+        Ces commandes confirment la présence de l’outil
+        <code>oscap</code> et des spécifications supportées (XCCDF, OVAL, CPE, CVSS),
+        ce qui permet de lancer des évaluations de conformité à partir de contenus
+        SCAP existants pour Ubuntu.
+      </p>
+    </section>
+
+    <section id="demarche" class="card">
+      <h3>Démarche d’audit et de remédiation</h3>
+
+      <h4>Phase 1 – Scan initial de conformité</h4>
+      <p>
+        La première phase consiste à exécuter un audit de conformité sur la machine cible.
+        Le profil retenu est le profil standard pour Ubuntu 20.04 fourni par le
+        SCAP Security Guide. Le scan est lancé avec la commande suivante.
+      </p>
+
+      <pre><code>sudo oscap xccdf eval \
+  --profile xccdf_org.ssgproject.content_profile_standard \
+  --results resultat.xml \
+  --report  rapport.html \
+  scap-security-guide-0.1.69/ssg-ubuntu2004-ds.xml</code></pre>
+
+      <p>
+        Pendant l’exécution, OpenSCAP affiche pour chaque règle un intitulé, un identifiant
+        et un résultat. Le rapport montre notamment plusieurs non-conformités significatives
+        comme l’absence de partition dédiée pour certains répertoires, l’absence d’activation
+        de l’ASLR et la possibilité de connexion SSH directe en <code>root</code>.
+      </p>
+      <p>
+        Le rapport HTML généré est ensuite copié dans le répertoire partagé afin d’être
+        consulté sur la machine hôte.
+      </p>
+
+      <pre><code>cp rapport.html /vagrant/audit_initial_FAIL.html</code></pre>
+
+      <figure class="arch-figure">
+        <img
+          src="../assets/projet8/audit-ssh-1.png"
+          alt="Extrait du rapport OpenSCAP initial montrant la règle Disable SSH Root Login en échec"
+          class="arch-image"
+        />
+        <figcaption>
+          Extrait du rapport initial. La règle <code>Disable SSH Root Login</code>
+          et plusieurs protections système apparaissent en échec.
+        </figcaption>
+      </figure>
+
+      <h4>Phase 2 – Sélection et formalisation des risques (EBIOS RM)</h4>
+      <p>
+        À partir des résultats du scan, trois vulnérabilités ont été retenues afin
+        de couvrir des dimensions différentes de la sécurité&nbsp;: gestion des accès,
+        protection du noyau et architecture du système de fichiers.
+      </p>
+      <p>
+        La première vulnérabilité concerne la règle
+        <code>sshd_disable_root_login</code>, qui indique que le compte
+        <code>root</code> est autorisé à se connecter directement en SSH.
+        Elle est analysée comme un risque fort d’accès non autorisé aux fonctions
+        d’administration. La fiche de risque établit le lien entre cette configuration
+        et un scénario d’attaque par force brute sur l’identifiant
+        <code>root</code>, avec des impacts critiques sur la confidentialité,
+        l’intégrité et la disponibilité.
+      </p>
+      <p>
+        La deuxième vulnérabilité est liée à la règle
+        <code>sysctl_kernel_randomize_va_space</code>, qui vérifie l’activation
+        de la randomisation de l’espace d’adressage (ASLR). Son échec met en évidence
+        un déficit de protection contre certaines attaques mémoire. La fiche de risque
+        associe cette configuration à un scénario d’exploitation de vulnérabilités
+        applicatives de type dépassement de tampon, avec un impact élevé sur
+        l’intégrité et la stabilité des processus applicatifs.
+      </p>
+      <p>
+        La troisième vulnérabilité retenue concerne l’absence de partition séparée
+        pour <code>/var</code> (<code>partition_for_var</code>). Cette configuration
+        est analysée comme un risque de perte de disponibilité en cas de saturation
+        de l’espace disque par les journaux ou des fichiers temporaires. La fiche de
+        risque décrit un scénario où une montée en volume des logs entraîne une
+        saturation de la partition racine et un arrêt du système.
+      </p>
+      <p>
+        Ces analyses sont regroupées dans un document dédié
+        <code>EBIOS_Risk_Analysis.md</code> qui formalise, pour chaque vulnérabilité,
+        le bien support, le bien essentiel, la source de menace, le scénario,
+        les impacts et les mesures de sécurité recommandées.
+      </p>
+
+      <h4>Phase 3 – Script de durcissement automatisé</h4>
+      <p>
+        La troisième phase consiste à traduire les mesures de sécurité identifiées
+        en un script de durcissement exécutable sur le serveur. L’objectif est
+        d’automatiser la correction des non-conformités relatives à SSH et à l’ASLR.
+      </p>
+      <p>
+        Sur la machine <code>iam-app</code>, un script
+        <code>hardening.sh</code> est créé. Il désactive le login SSH en root en
+        modifiant le fichier <code>/etc/ssh/sshd_config</code>, puis redémarre
+        le service. Il active ensuite la randomisation de l’espace mémoire via
+        <code>sysctl</code> et met à jour le fichier
+        <code>/etc/sysctl.conf</code> pour rendre la modification persistante.
+      </p>
+
+      <pre><code>chmod +x hardening.sh
+sudo ./hardening.sh</code></pre>
+
+      <p>
+        L’exécution du script affiche les étapes de durcissement et permet de vérifier
+        que les commandes se sont déroulées correctement. Ce script est versionné
+        dans le dépôt du projet comme élément de preuve et de réutilisation.
+      </p>
+
+      <h4>Phase 4 – Rescan et validation des corrections</h4>
+      <p>
+        La dernière phase consiste à relancer un audit OpenSCAP avec le même profil
+        que lors du scan initial. Cette répétition permet de valider l’effet des
+        corrections et de disposer d’un rapport « avant/après ».
+      </p>
+
+      <pre><code>sudo oscap xccdf eval \
+  --profile xccdf_org.ssgproject.content_profile_standard \
+  --results resultat_fix.xml \
+  --report  rapport_fix.html \
+  scap-security-guide-0.1.69/ssg-ubuntu2004-ds.xml
+
+cp rapport_fix.html /vagrant/audit_final_PASS.html</code></pre>
+
+      <p>
+        L’analyse du nouveau rapport montre que les règles
+        <code>Disable SSH Root Login</code> et
+        <code>Enable Randomized Layout of Virtual Address Space</code> sont
+        désormais conformes. Les autres recommandations qui n’ont pas été traitées
+        dans ce laboratoire, notamment celles nécessitant une refonte du
+        partitionnement, restent visibles dans le rapport et sont documentées
+        comme pistes d’évolution architecturale.
+      </p>
+
+      <figure class="arch-figure">
+        <img
+          src="../assets/projet8/audit-iam-hardening-ssh.png"
+          alt="Extrait du rapport OpenSCAP après durcissement, la règle Disable SSH Root Login est conforme"
+          class="arch-image"
+        />
+        <figcaption>
+          Extrait du rapport après durcissement. Les règles ciblées par le script
+          de hardening passent en conformité, ce qui valide les mesures appliquées.
+        </figcaption>
+      </figure>
+    </section>
+
+    <section id="resultats" class="card">
+      <h3>Résultats obtenus</h3>
+      <p>
+        À l’issue du projet, le serveur applicatif dispose d’un niveau de conformité
+        amélioré vis-à-vis du profil standard OpenSCAP pour Ubuntu 20.04. Les faiblesses
+        identifiées sur la configuration SSH et sur l’activation de l’ASLR sont corrigées
+        de manière reproductible grâce au script de durcissement.
+      </p>
+      <p>
+        Le projet produit plusieurs livrables complémentaires. Le premier est le rapport
+        d’audit initial, qui documente l’état de la machine avant toute modification.
+        Le second est le rapport après remédiation, qui matérialise la diminution du
+        nombre de non-conformités sur les règles visées. Le troisième est une analyse
+        de risques structurée qui fait le lien entre les résultats techniques et les
+        enjeux de sécurité. Le dernier est le script <code>hardening.sh</code> qui
+        peut être réutilisé et étendu à d’autres environnements.
+      </p>
+      <p>
+        L’ensemble illustre une démarche complète allant de la collecte de preuves
+        automatisées jusqu’à la proposition de mesures de sécurité argumentées et
+        vérifiées par un nouveau contrôle.
+      </p>
+    </section>
+
+    <section id="competences" class="card">
+      <h3>Compétences démontrées</h3>
+      <p>
+        Ce projet met en évidence la capacité à utiliser un outil d’audit automatisé
+        standardisé (OpenSCAP) pour évaluer la conformité d’un système Linux,
+        à interpréter les résultats et à sélectionner les écarts les plus
+        significatifs au regard des enjeux de sécurité.
+      </p>
+      <p>
+        Il montre également la maîtrise des concepts d’analyse de risques inspirés
+        d’EBIOS RM, en structurant les vulnérabilités techniques en biens,
+        sources de menace, scénarios, impacts et mesures de traitement. Enfin,
+        il illustre un savoir-faire en durcissement automatisé par script,
+        ainsi que l’habitude de valider les corrections par un rescan.
+      </p>
+
+      <p class="small">
+        <a href="../assets/projet8/audit-openscap-ebios-deploiement.pdf"
+           target="_blank" rel="noopener">
+          Documentation détaillée du projet (PDF)
+        </a>
+      </p>
+
+      <p class="small">
+        <a href="../assets/projet8/audit_initial_FAIL.html"
+           target="_blank" rel="noopener">
+          Rapport initial (premier scan)
+        </a>
+        |
+        <a href="../assets/projet8/audit_final_PASS.html"
+           target="_blank" rel="noopener">
+          Rapport initial (deuxième scan)
+        </a>
+      </p>
+
+      <p class="small">
+        <a href="https://github.com/joseline25/iam-provisioning/tree/main"
+           target="_blank" rel="noopener">
+          Repo Git 
+        </a>
+      </p>
+    </section>
+
+    <p class="small">
+      <a href="../index.html#projects">← Retour aux projets</a>
+    </p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>© 2025 Joseline Youego — Ingénieure Cybersécurité</p>
+    </div>
+  </footer>
+</body>
+</html>
